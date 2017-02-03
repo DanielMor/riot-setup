@@ -1,4 +1,5 @@
 var gulp = require('gulp');
+var sass = require('gulp-sass');
 var browserify = require('browserify');
 var runSequence = require('run-sequence');
 var riotify = require('riotify');
@@ -18,8 +19,12 @@ var config = {
     mainFile: './src/index.html',
     build: './build/',
   },
+  style: {
+    build: './build/css',
+    files: './src/style/**/*.sass',
+  },
   tag: {
-    files: './src/tags/**.tag',
+    files: './src/tags/**/*.tag',
   },
   server: {
     port: 9000,
@@ -47,6 +52,27 @@ gulp.task('html', function() {
     .pipe(gulp.dest(config.html.build))
 });
 
+gulp.task('materialize-css', function() {
+  return gulp.src('./node_modules/materialize-css/dist/**/*')
+    .pipe(gulp.dest(config.html.build));
+});
+
+gulp.task('font-awesome-fonts', function() {
+  return gulp.src('./node_modules/font-awesome/fonts/*')
+    .pipe(gulp.dest(config.html.build + '/fonts/'));
+});
+
+gulp.task('font-awesome-css', function() {
+  return gulp.src('./node_modules/font-awesome/css/font-awesome.min.css')
+    .pipe(gulp.dest(config.style.build));
+});
+
+gulp.task('style', function() {
+  return gulp.src(config.style.files)
+    .pipe(sass().on('error', sass.logError))
+    .pipe(gulp.dest(config.style.build))
+});
+
 gulp.task('server', function() {
   gulp.src(config.build)
     .pipe(server({
@@ -64,9 +90,10 @@ gulp.task('server', function() {
 gulp.task('watch-html', gulp.watch.bind(gulp, config.html.mainFile, ['html']));
 gulp.task('watch-js', gulp.watch.bind(gulp, config.js.files, ['browserify']));
 gulp.task('watch-tag', gulp.watch.bind(gulp, config.tag.files, ['browserify']));
+gulp.task('watch-style', gulp.watch.bind(gulp, config.style.files, ['style']));
 
 gulp.task('watch', function(callback) {
-  runSequence(['watch-js', 'watch-html', 'watch-tag'], callback);
+  runSequence(['watch-js', 'watch-html', 'watch-tag', 'watch-style'], callback);
 });
 
-gulp.task('default', [ 'html', 'browserify', 'server', 'watch']);
+gulp.task('default', [ 'html', 'materialize-css', 'font-awesome-fonts', 'font-awesome-css', 'style', 'browserify', 'server', 'watch']);
